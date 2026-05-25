@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>分數、小數與百分率 - 消消看挑戰</title>
+    <title>分數、小數與百分率 - 終極消消看</title>
     <style>
         body {
             font-family: 'Microsoft JhengHei', sans-serif;
@@ -11,26 +11,29 @@
             text-align: center;
             color: #333;
             margin: 0;
-            padding: 20px;
+            padding: 10px;
         }
         h1 {
             color: #2c3e50;
+            margin-bottom: 5px;
+            font-size: 1.6rem;
         }
         .info-panel {
             font-size: 1.2rem;
-            margin: 15px 0;
+            margin: 10px 0 20px 0;
             display: flex;
             justify-content: center;
-            gap: 30px;
+            gap: 20px;
             align-items: center;
+            flex-wrap: wrap;
         }
-        #timer {
+        .highlight {
             font-weight: bold;
             color: #e74c3c;
-            font-size: 1.5rem;
+            font-size: 1.4rem;
         }
         button {
-            padding: 10px 20px;
+            padding: 8px 16px;
             font-size: 1.1rem;
             background-color: #3498db;
             color: white;
@@ -40,35 +43,37 @@
             box-shadow: 0 4px 6px rgba(0,0,0,0.1);
             font-weight: bold;
         }
-        button:hover {
-            background-color: #2980b9;
-        }
-        /* 遊戲面板 4x8 的網格 */
+        button:hover { background-color: #2980b9; }
+        
+        /* 遊戲面板基礎設定 */
         .game-board {
             display: grid;
-            grid-template-columns: repeat(8, 1fr);
-            gap: 10px;
-            max-width: 1000px;
+            gap: 8px;
             margin: 0 auto;
-            min-height: 400px; /* 確保初始畫面有足夠高度 */
             align-content: center;
         }
-        /* 初始提示文字 */
+
+        /* 根據關卡自動調整網格 (正方形排列) */
+        .level-1 { grid-template-columns: repeat(4, 1fr); max-width: 500px; }
+        .level-2 { grid-template-columns: repeat(5, 1fr); max-width: 600px; }
+        .level-3 { grid-template-columns: repeat(6, 1fr); max-width: 750px; }
+        .level-4 { grid-template-columns: repeat(7, 1fr); max-width: 900px; }
+
         .start-prompt {
             grid-column: 1 / -1;
-            font-size: 1.5rem;
+            font-size: 1.3rem;
             color: #7f8c8d;
+            margin-top: 50px;
         }
-        /* 卡片樣式 */
+
+        /* 卡片基礎樣式 */
         .card {
             background-color: #ffffff;
             border: 2px solid #bdc3c7;
-            border-radius: 10px;
-            height: 90px;
+            border-radius: 8px;
             display: flex;
             justify-content: center;
             align-items: center;
-            font-size: 1.5rem;
             font-weight: bold;
             color: #2c3e50;
             cursor: pointer;
@@ -76,95 +81,129 @@
             box-shadow: 0 2px 4px rgba(0,0,0,0.1);
             user-select: none;
         }
-        .card:hover {
-            transform: scale(1.05);
-            background-color: #ecf0f1;
-        }
-        /* 被選中的卡片 */
-        .card.selected {
-            background-color: #f1c40f;
-            border-color: #f39c12;
-            color: white;
-            transform: scale(1.1);
-        }
-        /* 配對成功，隱藏卡片 */
-        .card.matched {
-            visibility: hidden;
-            pointer-events: none;
+        
+        /* 送分卡專屬樣式 */
+        .card.joker-card {
+            background-color: #fffacd;
+            color: #d35400;
+            border-color: #f1c40f;
         }
         
-        /* --- 直立分數的 CSS 樣式 --- */
+        /* 根據關卡調整卡片大小與字體 */
+        .level-1 .card { height: 90px; font-size: 1.5rem; }
+        .level-2 .card { height: 80px; font-size: 1.3rem; }
+        .level-3 .card { height: 70px; font-size: 1.1rem; }
+        .level-4 .card { height: 60px; font-size: 1rem; border-width: 1px; }
+
+        .card:hover { transform: scale(1.05); }
+        .card.selected { background-color: #f1c40f; border-color: #f39c12; color: white; transform: scale(1.1); }
+        .card.matched { visibility: hidden; pointer-events: none; }
+        
+        /* 直立分數樣式 */
         .fraction {
             display: inline-flex;
             flex-direction: column;
             align-items: center;
             vertical-align: middle;
-            font-size: 1.3rem;
         }
-        .fraction .num {
-            border-bottom: 2px solid currentColor;
-            padding: 0 4px;
-            line-height: 1.2;
-        }
-        .fraction .den {
-            padding: 0 4px;
-            line-height: 1.2;
-        }
+        .level-1 .fraction { font-size: 1.3rem; }
+        .level-2 .fraction { font-size: 1.1rem; }
+        .level-3 .fraction { font-size: 1rem; }
+        .level-4 .fraction { font-size: 0.9rem; }
+        
+        .fraction .num { border-bottom: 2px solid currentColor; padding: 0 4px; line-height: 1.2; }
+        .fraction .den { padding: 0 4px; line-height: 1.2; }
 
-        /* 針對手機螢幕做調整 */
-        @media (max-width: 768px) {
-            .game-board { grid-template-columns: repeat(4, 1fr); }
+        /* 手機螢幕優化，確保正方形陣列不走鐘 */
+        @media (max-width: 600px) {
+            .game-board { gap: 4px; }
+            .level-1 .card { height: 70px; font-size: 1.2rem; }
+            .level-2 .card { height: 60px; font-size: 1.1rem; }
+            .level-3 .card { height: 55px; font-size: 0.9rem; }
+            .level-4 .card { height: 48px; font-size: 0.8rem; }
+            .level-4 .fraction { font-size: 0.75rem; }
         }
     </style>
 </head>
 <body>
 
-    <h1>✨ 分數、小數與百分率 消消看 ✨</h1>
-    <p>規則：點選數值相等的兩張卡片（例如：<strong>0.5</strong> 和 <strong>50%</strong>）就能消除它們！</p>
+    <h1>✨ 分數、小數與百分率 - 終極消消看 ✨</h1>
     
     <div class="info-panel">
-        <div>花費時間：<span id="timer">0</span> 秒</div>
+        <div>關卡：第 <span id="levelDisplay" class="highlight">1</span> / 4 關</div>
+        <div>時間：<span id="timer" class="highlight">0</span> 秒</div>
         <button id="startBtn" onclick="startGame()">開始遊戲</button>
     </div>
 
-    <div class="game-board" id="board">
-        <div class="start-prompt">請點擊上方「開始遊戲」按鈕以產生題目並開始計時！</div>
+    <div class="game-board level-1" id="board">
+        <div class="start-prompt">請點擊上方「開始遊戲」挑戰 4 個關卡！</div>
     </div>
 
     <script>
-        const baseCards = [
-            // 0.5 家族
-            { text: "0.5", val: 0.5 }, { text: "50%", val: 0.5 }, { text: "1/2", val: 0.5 }, { text: "5/10", val: 0.5 },
-            // 0.25 家族
-            { text: "0.25", val: 0.25 }, { text: "25%", val: 0.25 }, { text: "1/4", val: 0.25 }, { text: "25/100", val: 0.25 },
-            // 0.75 家族
-            { text: "0.75", val: 0.75 }, { text: "75%", val: 0.75 }, { text: "3/4", val: 0.75 }, { text: "75/100", val: 0.75 },
-            // 0.2 家族
-            { text: "0.2", val: 0.2 }, { text: "20%", val: 0.2 }, { text: "1/5", val: 0.2 }, { text: "2/10", val: 0.2 },
-            // 0.4 家族
-            { text: "0.4", val: 0.4 }, { text: "40%", val: 0.4 }, { text: "2/5", val: 0.4 }, { text: "4/10", val: 0.4 },
-            // 0.6 家族
-            { text: "0.6", val: 0.6 }, { text: "60%", val: 0.6 }, { text: "3/5", val: 0.6 }, { text: "6/10", val: 0.6 },
-            // 0.8 家族
-            { text: "0.8", val: 0.8 }, { text: "80%", val: 0.8 }, { text: "4/5", val: 0.8 }, { text: "8/10", val: 0.8 },
-            // 0.1 家族
-            { text: "0.1", val: 0.1 }, { text: "10%", val: 0.1 }, { text: "1/10", val: 0.1 }, { text: "10/100", val: 0.1 }
+        // 基礎題庫 (25對，足夠前三關隨機取用)
+        const basicPairs = [
+            [{text: "0.5", val: 0.5}, {text: "50%", val: 0.5}],
+            [{text: "1/2", val: 0.5}, {text: "5/10", val: 0.5}],
+            [{text: "0.25", val: 0.25}, {text: "25%", val: 0.25}],
+            [{text: "1/4", val: 0.25}, {text: "25/100", val: 0.25}],
+            [{text: "0.75", val: 0.75}, {text: "75%", val: 0.75}],
+            [{text: "3/4", val: 0.75}, {text: "75/100", val: 0.75}],
+            [{text: "0.2", val: 0.2}, {text: "20%", val: 0.2}],
+            [{text: "1/5", val: 0.2}, {text: "2/10", val: 0.2}],
+            [{text: "0.4", val: 0.4}, {text: "40%", val: 0.4}],
+            [{text: "2/5", val: 0.4}, {text: "4/10", val: 0.4}],
+            [{text: "0.6", val: 0.6}, {text: "60%", val: 0.6}],
+            [{text: "3/5", val: 0.6}, {text: "6/10", val: 0.6}],
+            [{text: "0.8", val: 0.8}, {text: "80%", val: 0.8}],
+            [{text: "4/5", val: 0.8}, {text: "8/10", val: 0.8}],
+            [{text: "0.1", val: 0.1}, {text: "10%", val: 0.1}],
+            [{text: "1/10", val: 0.1}, {text: "10/100", val: 0.1}],
+            [{text: "0.9", val: 0.9}, {text: "90%", val: 0.9}],
+            [{text: "9/10", val: 0.9}, {text: "90/100", val: 0.9}],
+            [{text: "1", val: 1}, {text: "100%", val: 1}],
+            [{text: "0.3", val: 0.3}, {text: "30%", val: 0.3}],
+            [{text: "3/10", val: 0.3}, {text: "30/100", val: 0.3}],
+            [{text: "0.7", val: 0.7}, {text: "70%", val: 0.7}],
+            [{text: "7/10", val: 0.7}, {text: "70/100", val: 0.7}],
+            [{text: "0.05", val: 0.05}, {text: "5%", val: 0.05}],
+            [{text: "1/20", val: 0.05}, {text: "5/100", val: 0.05}]
         ];
 
+        // 刁鑽進階題庫 (專為第 4 關設計)
+        const advancedPairs = [
+            [{text: "0.001", val: 0.001}, {text: "0.1%", val: 0.001}],
+            [{text: "1/1000", val: 0.001}, {text: "0.1%", val: 0.001}],
+            [{text: "0.802", val: 0.802}, {text: "80.2%", val: 0.802}],
+            [{text: "0.125", val: 0.125}, {text: "12.5%", val: 0.125}],
+            [{text: "1/8", val: 0.125}, {text: "12.5%", val: 0.125}],
+            [{text: "0.375", val: 0.375}, {text: "37.5%", val: 0.375}],
+            [{text: "3/8", val: 0.375}, {text: "37.5%", val: 0.375}],
+            [{text: "0.875", val: 0.875}, {text: "87.5%", val: 0.875}],
+            [{text: "7/8", val: 0.875}, {text: "87.5%", val: 0.875}],
+            [{text: "1.5", val: 1.5}, {text: "150%", val: 1.5}],
+            [{text: "3/2", val: 1.5}, {text: "150%", val: 1.5}],
+            [{text: "0.002", val: 0.002}, {text: "0.2%", val: 0.002}],
+            [{text: "0.045", val: 0.045}, {text: "4.5%", val: 0.045}],
+            [{text: "1.05", val: 1.05}, {text: "105%", val: 1.05}]
+        ];
+
+        let currentLevel = 1;
         let cards = [];
         let firstCard = null;
         let secondCard = null;
-        let matchedPairs = 0;
+        let matchedCardsCount = 0;
+        let targetCardsCount = 0;
         let timeElapsed = 0;
         let timerInterval = null;
         let isLocked = false;
 
         const boardElement = document.getElementById("board");
         const timerElement = document.getElementById("timer");
+        const levelElement = document.getElementById("levelDisplay");
         const startBtn = document.getElementById("startBtn");
 
-        // 將普通的 "1/2" 字串轉換成直立分數的 HTML 結構
         function formatText(text) {
+            if (text.includes('🌟')) return text; // 送分卡直接回傳
             if (text.includes('/')) {
                 const parts = text.split('/');
                 return `<div class="fraction"><span class="num">${parts[0]}</span><span class="den">${parts[1]}</span></div>`;
@@ -172,45 +211,88 @@
             return text;
         }
 
-        function startGame() {
-            // 更改按鈕文字
-            startBtn.textContent = "重新開始";
+        function getRandomPairs(sourceArray, count) {
+            let shuffled = [...sourceArray].sort(() => Math.random() - 0.5);
+            return shuffled.slice(0, count);
+        }
 
-            // 重置所有數據與計時器
+        function startGame() {
+            startBtn.textContent = "重新開始";
             clearInterval(timerInterval);
             timeElapsed = 0;
-            matchedPairs = 0;
-            firstCard = null;
-            secondCard = null;
-            isLocked = false;
+            currentLevel = 1;
             timerElement.textContent = timeElapsed;
 
-            // 複製並洗牌
-            cards = [...baseCards];
-            cards.sort(() => Math.random() - 0.5);
-
-            // 清空面板並產生卡片
-            boardElement.innerHTML = "";
-            cards.forEach((card, index) => {
-                const cardDiv = document.createElement("div");
-                cardDiv.classList.add("card");
-                cardDiv.innerHTML = formatText(card.text);
-                cardDiv.dataset.val = card.val;
-                cardDiv.dataset.index = index;
-                
-                cardDiv.addEventListener("click", () => handleCardClick(cardDiv, card));
-                boardElement.appendChild(cardDiv);
-            });
-
-            // 正式開始計時
             timerInterval = setInterval(() => {
                 timeElapsed++;
                 timerElement.textContent = timeElapsed;
             }, 1000);
+
+            loadLevel(currentLevel);
         }
 
-        function handleCardClick(cardElement, cardData) {
-            if (isLocked || cardElement.classList.contains("matched") || cardElement === firstCard) {
+        function loadLevel(level) {
+            matchedCardsCount = 0;
+            firstCard = null;
+            secondCard = null;
+            isLocked = false;
+            levelElement.textContent = level;
+
+            let deckPairs = [];
+            let hasJoker = false;
+
+            if (level === 1) { // 16 題 = 8 對
+                deckPairs = getRandomPairs(basicPairs, 8);
+            } else if (level === 2) { // 25 題 = 12 對 + 1 送分卡
+                deckPairs = getRandomPairs(basicPairs, 12);
+                hasJoker = true;
+            } else if (level === 3) { // 36 題 = 18 對
+                deckPairs = getRandomPairs(basicPairs, 18);
+            } else if (level === 4) { // 49 題 = 24 對 + 1 送分卡 (強制納入進階題庫)
+                let adv = getRandomPairs(advancedPairs, advancedPairs.length); // 拿全部 14 對進階題
+                let bas = getRandomPairs(basicPairs, 10); // 補 10 對基礎題
+                deckPairs = [...adv, ...bas];
+                hasJoker = true;
+            }
+
+            let deckCards = [];
+            deckPairs.forEach(pair => {
+                deckCards.push(pair[0]);
+                deckCards.push(pair[1]);
+            });
+
+            if (hasJoker) {
+                deckCards.push({text: "🌟<br>送分", val: "joker"});
+            }
+
+            targetCardsCount = deckCards.length;
+            cards = deckCards.sort(() => Math.random() - 0.5);
+
+            boardElement.className = `game-board level-${level}`;
+            boardElement.innerHTML = "";
+
+            cards.forEach((card, index) => {
+                const cardDiv = document.createElement("div");
+                cardDiv.classList.add("card");
+                if (card.val === 'joker') cardDiv.classList.add("joker-card");
+                
+                cardDiv.innerHTML = formatText(card.text);
+                cardDiv.dataset.val = card.val;
+                cardDiv.dataset.index = index;
+                
+                cardDiv.addEventListener("click", () => handleCardClick(cardDiv));
+                boardElement.appendChild(cardDiv);
+            });
+        }
+
+        function handleCardClick(cardElement) {
+            if (isLocked || cardElement.classList.contains("matched") || cardElement === firstCard) return;
+
+            // 處理送分卡 (直接消除)
+            if (cardElement.dataset.val === 'joker') {
+                cardElement.classList.add("matched");
+                matchedCardsCount += 1;
+                checkWin();
                 return;
             }
 
@@ -232,13 +314,9 @@
                         firstCard = null;
                         secondCard = null;
                         isLocked = false;
-                        matchedPairs++;
-
-                        if (matchedPairs === 16) {
-                            clearInterval(timerInterval);
-                            setTimeout(() => alert(`🎉 恭喜過關！\n您總共花了 ${timeElapsed} 秒！`), 300);
-                        }
-                    }, 500);
+                        matchedCardsCount += 2;
+                        checkWin();
+                    }, 350);
                 } else {
                     setTimeout(() => {
                         firstCard.classList.remove("selected");
@@ -246,7 +324,24 @@
                         firstCard = null;
                         secondCard = null;
                         isLocked = false;
-                    }, 800);
+                    }, 600);
+                }
+            }
+        }
+
+        function checkWin() {
+            if (matchedCardsCount === targetCardsCount) {
+                if (currentLevel < 4) {
+                    setTimeout(() => {
+                        alert(`🎉 太棒了！順利通過第 ${currentLevel} 關！\n準備好迎接下一關了嗎？`);
+                        currentLevel++;
+                        loadLevel(currentLevel);
+                    }, 300);
+                } else {
+                    clearInterval(timerInterval);
+                    setTimeout(() => {
+                        alert(`🏆 傳說級過關！\n您完成了全部 4 關，打敗了終極小數魔王！\n總共花費時間：${timeElapsed} 秒！`);
+                    }, 300);
                 }
             }
         }
