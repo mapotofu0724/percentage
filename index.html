@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>分數、小數與百分率 - 消消看挑戰</title>
+    <style>
+        body {
+            font-family: 'Microsoft JhengHei', sans-serif;
+            background-color: #f0f8ff;
+            text-align: center;
+            color: #333;
+            margin: 0;
+            padding: 20px;
+        }
+        h1 {
+            color: #2c3e50;
+        }
+        .info-panel {
+            font-size: 1.2rem;
+            margin: 15px 0;
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+            align-items: center;
+        }
+        #timer {
+            font-weight: bold;
+            color: #e74c3c;
+            font-size: 1.5rem;
+        }
+        button {
+            padding: 10px 20px;
+            font-size: 1.1rem;
+            background-color: #3498db;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            font-weight: bold;
+        }
+        button:hover {
+            background-color: #2980b9;
+        }
+        /* 遊戲面板 4x8 的網格 */
+        .game-board {
+            display: grid;
+            grid-template-columns: repeat(8, 1fr);
+            gap: 10px;
+            max-width: 1000px;
+            margin: 0 auto;
+            min-height: 400px; /* 確保初始畫面有足夠高度 */
+            align-content: center;
+        }
+        /* 初始提示文字 */
+        .start-prompt {
+            grid-column: 1 / -1;
+            font-size: 1.5rem;
+            color: #7f8c8d;
+        }
+        /* 卡片樣式 */
+        .card {
+            background-color: #ffffff;
+            border: 2px solid #bdc3c7;
+            border-radius: 10px;
+            height: 90px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #2c3e50;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            user-select: none;
+        }
+        .card:hover {
+            transform: scale(1.05);
+            background-color: #ecf0f1;
+        }
+        /* 被選中的卡片 */
+        .card.selected {
+            background-color: #f1c40f;
+            border-color: #f39c12;
+            color: white;
+            transform: scale(1.1);
+        }
+        /* 配對成功，隱藏卡片 */
+        .card.matched {
+            visibility: hidden;
+            pointer-events: none;
+        }
+        
+        /* --- 直立分數的 CSS 樣式 --- */
+        .fraction {
+            display: inline-flex;
+            flex-direction: column;
+            align-items: center;
+            vertical-align: middle;
+            font-size: 1.3rem;
+        }
+        .fraction .num {
+            border-bottom: 2px solid currentColor;
+            padding: 0 4px;
+            line-height: 1.2;
+        }
+        .fraction .den {
+            padding: 0 4px;
+            line-height: 1.2;
+        }
+
+        /* 針對手機螢幕做調整 */
+        @media (max-width: 768px) {
+            .game-board { grid-template-columns: repeat(4, 1fr); }
+        }
+    </style>
+</head>
+<body>
+
+    <h1>✨ 分數、小數與百分率 消消看 ✨</h1>
+    <p>規則：點選數值相等的兩張卡片（例如：<strong>0.5</strong> 和 <strong>50%</strong>）就能消除它們！</p>
+    
+    <div class="info-panel">
+        <div>花費時間：<span id="timer">0</span> 秒</div>
+        <button id="startBtn" onclick="startGame()">開始遊戲</button>
+    </div>
+
+    <div class="game-board" id="board">
+        <div class="start-prompt">請點擊上方「開始遊戲」按鈕以產生題目並開始計時！</div>
+    </div>
+
+    <script>
+        const baseCards = [
+            // 0.5 家族
+            { text: "0.5", val: 0.5 }, { text: "50%", val: 0.5 }, { text: "1/2", val: 0.5 }, { text: "5/10", val: 0.5 },
+            // 0.25 家族
+            { text: "0.25", val: 0.25 }, { text: "25%", val: 0.25 }, { text: "1/4", val: 0.25 }, { text: "25/100", val: 0.25 },
+            // 0.75 家族
+            { text: "0.75", val: 0.75 }, { text: "75%", val: 0.75 }, { text: "3/4", val: 0.75 }, { text: "75/100", val: 0.75 },
+            // 0.2 家族
+            { text: "0.2", val: 0.2 }, { text: "20%", val: 0.2 }, { text: "1/5", val: 0.2 }, { text: "2/10", val: 0.2 },
+            // 0.4 家族
+            { text: "0.4", val: 0.4 }, { text: "40%", val: 0.4 }, { text: "2/5", val: 0.4 }, { text: "4/10", val: 0.4 },
+            // 0.6 家族
+            { text: "0.6", val: 0.6 }, { text: "60%", val: 0.6 }, { text: "3/5", val: 0.6 }, { text: "6/10", val: 0.6 },
+            // 0.8 家族
+            { text: "0.8", val: 0.8 }, { text: "80%", val: 0.8 }, { text: "4/5", val: 0.8 }, { text: "8/10", val: 0.8 },
+            // 0.1 家族
+            { text: "0.1", val: 0.1 }, { text: "10%", val: 0.1 }, { text: "1/10", val: 0.1 }, { text: "10/100", val: 0.1 }
+        ];
+
+        let cards = [];
+        let firstCard = null;
+        let secondCard = null;
+        let matchedPairs = 0;
+        let timeElapsed = 0;
+        let timerInterval = null;
+        let isLocked = false;
+
+        const boardElement = document.getElementById("board");
+        const timerElement = document.getElementById("timer");
+        const startBtn = document.getElementById("startBtn");
+
+        // 將普通的 "1/2" 字串轉換成直立分數的 HTML 結構
+        function formatText(text) {
+            if (text.includes('/')) {
+                const parts = text.split('/');
+                return `<div class="fraction"><span class="num">${parts[0]}</span><span class="den">${parts[1]}</span></div>`;
+            }
+            return text;
+        }
+
+        function startGame() {
+            // 更改按鈕文字
+            startBtn.textContent = "重新開始";
+
+            // 重置所有數據與計時器
+            clearInterval(timerInterval);
+            timeElapsed = 0;
+            matchedPairs = 0;
+            firstCard = null;
+            secondCard = null;
+            isLocked = false;
+            timerElement.textContent = timeElapsed;
+
+            // 複製並洗牌
+            cards = [...baseCards];
+            cards.sort(() => Math.random() - 0.5);
+
+            // 清空面板並產生卡片
+            boardElement.innerHTML = "";
+            cards.forEach((card, index) => {
+                const cardDiv = document.createElement("div");
+                cardDiv.classList.add("card");
+                cardDiv.innerHTML = formatText(card.text);
+                cardDiv.dataset.val = card.val;
+                cardDiv.dataset.index = index;
+                
+                cardDiv.addEventListener("click", () => handleCardClick(cardDiv, card));
+                boardElement.appendChild(cardDiv);
+            });
+
+            // 正式開始計時
+            timerInterval = setInterval(() => {
+                timeElapsed++;
+                timerElement.textContent = timeElapsed;
+            }, 1000);
+        }
+
+        function handleCardClick(cardElement, cardData) {
+            if (isLocked || cardElement.classList.contains("matched") || cardElement === firstCard) {
+                return;
+            }
+
+            cardElement.classList.add("selected");
+
+            if (!firstCard) {
+                firstCard = cardElement;
+            } else {
+                secondCard = cardElement;
+                isLocked = true;
+
+                if (firstCard.dataset.val === secondCard.dataset.val) {
+                    setTimeout(() => {
+                        firstCard.classList.remove("selected");
+                        secondCard.classList.remove("selected");
+                        firstCard.classList.add("matched");
+                        secondCard.classList.add("matched");
+                        
+                        firstCard = null;
+                        secondCard = null;
+                        isLocked = false;
+                        matchedPairs++;
+
+                        if (matchedPairs === 16) {
+                            clearInterval(timerInterval);
+                            setTimeout(() => alert(`🎉 恭喜過關！\n您總共花了 ${timeElapsed} 秒！`), 300);
+                        }
+                    }, 500);
+                } else {
+                    setTimeout(() => {
+                        firstCard.classList.remove("selected");
+                        secondCard.classList.remove("selected");
+                        firstCard = null;
+                        secondCard = null;
+                        isLocked = false;
+                    }, 800);
+                }
+            }
+        }
+    </script>
+</body>
+</html>
