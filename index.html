@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>分數、小數與百分率 - 終極消消看</title>
+    <title>分數、小數與百分率 - 三重消消看</title>
     <style>
         body {
             font-family: 'Microsoft JhengHei', sans-serif;
@@ -57,7 +57,6 @@
         .level-1 { grid-template-columns: repeat(4, 1fr); max-width: 500px; }
         .level-2 { grid-template-columns: repeat(5, 1fr); max-width: 600px; }
         .level-3 { grid-template-columns: repeat(6, 1fr); max-width: 750px; }
-        .level-4 { grid-template-columns: repeat(7, 1fr); max-width: 900px; }
 
         .start-prompt {
             grid-column: 1 / -1;
@@ -93,7 +92,6 @@
         .level-1 .card { height: 90px; font-size: 1.5rem; }
         .level-2 .card { height: 80px; font-size: 1.3rem; }
         .level-3 .card { height: 70px; font-size: 1.1rem; }
-        .level-4 .card { height: 60px; font-size: 1rem; border-width: 1px; }
 
         .card:hover { transform: scale(1.05); }
         .card.selected { background-color: #f1c40f; border-color: #f39c12; color: white; transform: scale(1.1); }
@@ -109,7 +107,6 @@
         .level-1 .fraction { font-size: 1.3rem; }
         .level-2 .fraction { font-size: 1.1rem; }
         .level-3 .fraction { font-size: 1rem; }
-        .level-4 .fraction { font-size: 0.9rem; }
         
         .fraction .num { border-bottom: 2px solid currentColor; padding: 0 4px; line-height: 1.2; }
         .fraction .den { padding: 0 4px; line-height: 1.2; }
@@ -120,27 +117,25 @@
             .level-1 .card { height: 70px; font-size: 1.2rem; }
             .level-2 .card { height: 60px; font-size: 1.1rem; }
             .level-3 .card { height: 55px; font-size: 0.9rem; }
-            .level-4 .card { height: 48px; font-size: 0.8rem; }
-            .level-4 .fraction { font-size: 0.75rem; }
         }
     </style>
 </head>
 <body>
 
-    <h1>✨ 分數、小數與百分率 - 終極消消看 ✨</h1>
+    <h1>✨ 分數、小數與百分率 - 三重消消看 ✨</h1>
     
     <div class="info-panel">
-        <div>關卡：第 <span id="levelDisplay" class="highlight">1</span> / 4 關</div>
+        <div>關卡：第 <span id="levelDisplay" class="highlight">1</span> / 3 關</div>
         <div>時間：<span id="timer" class="highlight">0</span> 秒</div>
         <button id="startBtn" onclick="startGame()">開始遊戲</button>
     </div>
 
     <div class="game-board level-1" id="board">
-        <div class="start-prompt">請點擊上方「開始遊戲」挑戰 4 個關卡！</div>
+        <div class="start-prompt">請點擊上方「開始遊戲」挑戰 3 個關卡！</div>
     </div>
 
     <script>
-        // 基礎題庫 (25對，足夠前三關隨機取用)
+        // 基礎題庫
         const basicPairs = [
             [{text: "0.5", val: 0.5}, {text: "50%", val: 0.5}],
             [{text: "1/2", val: 0.5}, {text: "5/10", val: 0.5}],
@@ -169,7 +164,7 @@
             [{text: "1/20", val: 0.05}, {text: "5/100", val: 0.05}]
         ];
 
-        // 刁鑽進階題庫 (專為第 4 關設計)
+        // 刁鑽進階題庫
         const advancedPairs = [
             [{text: "0.001", val: 0.001}, {text: "0.1%", val: 0.001}],
             [{text: "1/1000", val: 0.001}, {text: "0.1%", val: 0.001}],
@@ -203,7 +198,7 @@
         const startBtn = document.getElementById("startBtn");
 
         function formatText(text) {
-            if (text.includes('🌟')) return text; // 送分卡直接回傳
+            if (text.includes('🌟')) return text; 
             if (text.includes('/')) {
                 const parts = text.split('/');
                 return `<div class="fraction"><span class="num">${parts[0]}</span><span class="den">${parts[1]}</span></div>`;
@@ -241,19 +236,18 @@
             let deckPairs = [];
             let hasJoker = false;
 
-            if (level === 1) { // 16 題 = 8 對
+            if (level === 1) { // 16 題 = 8 對 (全基礎)
                 deckPairs = getRandomPairs(basicPairs, 8);
-            } else if (level === 2) { // 25 題 = 12 對 + 1 送分卡
-                deckPairs = getRandomPairs(basicPairs, 12);
-                hasJoker = true;
-            } else if (level === 3) { // 36 題 = 18 對
-                deckPairs = getRandomPairs(basicPairs, 18);
-            } else if (level === 4) { // 49 題 = 24 對 + 1 送分卡 (強制納入進階題庫)
-                let adv = getRandomPairs(advancedPairs, advancedPairs.length); // 拿全部 14 對進階題
-                let bas = getRandomPairs(basicPairs, 10); // 補 10 對基礎題
+            } else if (level === 2) { // 25 題 = 12 對 + 1 送分卡 (開始混入少量進階)
+                let adv = getRandomPairs(advancedPairs, 4); // 4對進階
+                let bas = getRandomPairs(basicPairs, 8); // 8對基礎
                 deckPairs = [...adv, ...bas];
                 hasJoker = true;
-            }
+            } else if (level === 3) { // 36 題 = 18 對 (大量進階)
+                let adv = getRandomPairs(advancedPairs, 10); // 10對進階
+                let bas = getRandomPairs(basicPairs, 8); // 8對基礎
+                deckPairs = [...adv, ...bas];
+            } 
 
             let deckCards = [];
             deckPairs.forEach(pair => {
@@ -288,7 +282,7 @@
         function handleCardClick(cardElement) {
             if (isLocked || cardElement.classList.contains("matched") || cardElement === firstCard) return;
 
-            // 處理送分卡 (直接消除)
+            // 處理送分卡
             if (cardElement.dataset.val === 'joker') {
                 cardElement.classList.add("matched");
                 matchedCardsCount += 1;
@@ -331,7 +325,7 @@
 
         function checkWin() {
             if (matchedCardsCount === targetCardsCount) {
-                if (currentLevel < 4) {
+                if (currentLevel < 3) {
                     setTimeout(() => {
                         alert(`🎉 太棒了！順利通過第 ${currentLevel} 關！\n準備好迎接下一關了嗎？`);
                         currentLevel++;
@@ -340,7 +334,7 @@
                 } else {
                     clearInterval(timerInterval);
                     setTimeout(() => {
-                        alert(`🏆 傳說級過關！\n您完成了全部 4 關，打敗了終極小數魔王！\n總共花費時間：${timeElapsed} 秒！`);
+                        alert(`🏆 傳說級過關！\n您完成了全部 3 關，打敗了終極小數魔王！\n總共花費時間：${timeElapsed} 秒！`);
                     }, 300);
                 }
             }
