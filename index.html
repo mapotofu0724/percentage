@@ -3,342 +3,219 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>分數、小數與百分率 - 三重消消看</title>
+    <title>小五數學勇者大冒險</title>
     <style>
         body {
-            font-family: 'Microsoft JhengHei', sans-serif;
+            font-family: 'Comic Sans MS', 'Microsoft JhengHei', sans-serif;
             background-color: #f0f8ff;
-            text-align: center;
-            color: #333;
             margin: 0;
-            padding: 10px;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+        #game-container {
+            background-color: #ffffff;
+            border-radius: 15px;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+            width: 90%;
+            max-width: 600px;
+            padding: 30px;
+            text-align: center;
         }
         h1 {
-            color: #2c3e50;
-            margin-bottom: 5px;
-            font-size: 1.6rem;
+            color: #ff6b6b;
+            font-size: 28px;
+            margin-bottom: 20px;
         }
-        .info-panel {
-            font-size: 1.2rem;
-            margin: 10px 0 20px 0;
-            display: flex;
-            justify-content: center;
-            gap: 20px;
-            align-items: center;
-            flex-wrap: wrap;
+        .unit-badge {
+            background-color: #4ecdc4;
+            color: white;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 14px;
+            display: inline-block;
+            margin-bottom: 15px;
         }
-        .highlight {
-            font-weight: bold;
-            color: #e74c3c;
-            font-size: 1.4rem;
+        .question {
+            font-size: 20px;
+            color: #333;
+            margin-bottom: 30px;
+            line-height: 1.5;
         }
-        button {
-            padding: 8px 16px;
-            font-size: 1.1rem;
-            background-color: #3498db;
+        .options-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+        .option-btn {
+            background-color: #f7d794;
+            border: 2px solid #f5cd79;
+            border-radius: 10px;
+            padding: 15px;
+            font-size: 18px;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-family: inherit;
+        }
+        .option-btn:hover {
+            background-color: #f5cd79;
+            transform: scale(1.05);
+        }
+        .start-btn, .restart-btn {
+            background-color: #ff6b6b;
             color: white;
             border: none;
-            border-radius: 8px;
+            padding: 15px 30px;
+            font-size: 20px;
+            border-radius: 10px;
             cursor: pointer;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            margin-top: 20px;
+        }
+        .start-btn:hover, .restart-btn:hover {
+            background-color: #ff5252;
+        }
+        #feedback {
+            margin-top: 20px;
+            font-size: 18px;
             font-weight: bold;
+            min-height: 27px;
         }
-        button:hover { background-color: #2980b9; }
+        .correct { color: #2ecc71; }
+        .wrong { color: #e74c3c; }
         
-        /* 遊戲面板基礎設定 */
-        .game-board {
-            display: grid;
-            gap: 8px;
-            margin: 0 auto;
-            align-content: center;
+        /* Progress Bar */
+        #progress-bar {
+            width: 100%;
+            background-color: #e0e0e0;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            height: 10px;
+            display: none;
         }
-
-        /* 根據關卡自動調整網格 (正方形排列) */
-        .level-1 { grid-template-columns: repeat(4, 1fr); max-width: 500px; }
-        .level-2 { grid-template-columns: repeat(5, 1fr); max-width: 600px; }
-        .level-3 { grid-template-columns: repeat(6, 1fr); max-width: 750px; }
-
-        .start-prompt {
-            grid-column: 1 / -1;
-            font-size: 1.3rem;
-            color: #7f8c8d;
-            margin-top: 50px;
-        }
-
-        /* 卡片基礎樣式 */
-        .card {
-            background-color: #ffffff;
-            border: 2px solid #bdc3c7;
-            border-radius: 8px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            font-weight: bold;
-            color: #2c3e50;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-            user-select: none;
-        }
-        
-        /* 送分卡專屬樣式 */
-        .card.joker-card {
-            background-color: #fffacd;
-            color: #d35400;
-            border-color: #f1c40f;
-        }
-        
-        /* 根據關卡調整卡片大小與字體 */
-        .level-1 .card { height: 90px; font-size: 1.5rem; }
-        .level-2 .card { height: 80px; font-size: 1.3rem; }
-        .level-3 .card { height: 70px; font-size: 1.1rem; }
-
-        .card:hover { transform: scale(1.05); }
-        .card.selected { background-color: #f1c40f; border-color: #f39c12; color: white; transform: scale(1.1); }
-        .card.matched { visibility: hidden; pointer-events: none; }
-        
-        /* 直立分數樣式 */
-        .fraction {
-            display: inline-flex;
-            flex-direction: column;
-            align-items: center;
-            vertical-align: middle;
-        }
-        .level-1 .fraction { font-size: 1.3rem; }
-        .level-2 .fraction { font-size: 1.1rem; }
-        .level-3 .fraction { font-size: 1rem; }
-        
-        .fraction .num { border-bottom: 2px solid currentColor; padding: 0 4px; line-height: 1.2; }
-        .fraction .den { padding: 0 4px; line-height: 1.2; }
-
-        /* 手機螢幕優化，確保正方形陣列不走鐘 */
-        @media (max-width: 600px) {
-            .game-board { gap: 4px; }
-            .level-1 .card { height: 70px; font-size: 1.2rem; }
-            .level-2 .card { height: 60px; font-size: 1.1rem; }
-            .level-3 .card { height: 55px; font-size: 0.9rem; }
+        #progress {
+            width: 0%;
+            height: 100%;
+            background-color: #4ecdc4;
+            border-radius: 10px;
+            transition: width 0.3s;
         }
     </style>
 </head>
 <body>
 
-    <h1>✨ 分數、小數與百分率 - 三重消消看 ✨</h1>
-    
-    <div class="info-panel">
-        <div>關卡：第 <span id="levelDisplay" class="highlight">1</span> / 3 關</div>
-        <div>時間：<span id="timer" class="highlight">0</span> 秒</div>
-        <button id="startBtn" onclick="startGame()">開始遊戲</button>
+<div id="game-container">
+    <div id="start-screen">
+        <h1>🌟 小五數學勇者大冒險 🌟</h1>
+        <p>準備好挑戰 5 個單元的數學大魔王了嗎？<br>仔細閱讀題目，選出正確答案吧！</p>
+        <button class="start-btn" onclick="startGame()">開始冒險</button>
     </div>
 
-    <div class="game-board level-1" id="board">
-        <div class="start-prompt">請點擊上方「開始遊戲」挑戰 3 個關卡！</div>
+    <div id="progress-bar"><div id="progress"></div></div>
+
+    <div id="quiz-screen" style="display: none;">
+        <div id="unit-badge" class="unit-badge"></div>
+        <div id="question" class="question"></div>
+        <div class="options-grid" id="options"></div>
+        <div id="feedback"></div>
     </div>
 
-    <script>
-        // 基礎題庫
-        const basicPairs = [
-            [{text: "0.5", val: 0.5}, {text: "50%", val: 0.5}],
-            [{text: "1/2", val: 0.5}, {text: "5/10", val: 0.5}],
-            [{text: "0.25", val: 0.25}, {text: "25%", val: 0.25}],
-            [{text: "1/4", val: 0.25}, {text: "25/100", val: 0.25}],
-            [{text: "0.75", val: 0.75}, {text: "75%", val: 0.75}],
-            [{text: "3/4", val: 0.75}, {text: "75/100", val: 0.75}],
-            [{text: "0.2", val: 0.2}, {text: "20%", val: 0.2}],
-            [{text: "1/5", val: 0.2}, {text: "2/10", val: 0.2}],
-            [{text: "0.4", val: 0.4}, {text: "40%", val: 0.4}],
-            [{text: "2/5", val: 0.4}, {text: "4/10", val: 0.4}],
-            [{text: "0.6", val: 0.6}, {text: "60%", val: 0.6}],
-            [{text: "3/5", val: 0.6}, {text: "6/10", val: 0.6}],
-            [{text: "0.8", val: 0.8}, {text: "80%", val: 0.8}],
-            [{text: "4/5", val: 0.8}, {text: "8/10", val: 0.8}],
-            [{text: "0.1", val: 0.1}, {text: "10%", val: 0.1}],
-            [{text: "1/10", val: 0.1}, {text: "10/100", val: 0.1}],
-            [{text: "0.9", val: 0.9}, {text: "90%", val: 0.9}],
-            [{text: "9/10", val: 0.9}, {text: "90/100", val: 0.9}],
-            [{text: "1", val: 1}, {text: "100%", val: 1}],
-            [{text: "0.3", val: 0.3}, {text: "30%", val: 0.3}],
-            [{text: "3/10", val: 0.3}, {text: "30/100", val: 0.3}],
-            [{text: "0.7", val: 0.7}, {text: "70%", val: 0.7}],
-            [{text: "7/10", val: 0.7}, {text: "70/100", val: 0.7}],
-            [{text: "0.05", val: 0.05}, {text: "5%", val: 0.05}],
-            [{text: "1/20", val: 0.05}, {text: "5/100", val: 0.05}]
-        ];
+    <div id="end-screen" style="display: none;">
+        <h1>🎉 恭喜過關！ 🎉</h1>
+        <p>你已經成功完成了五個單元的數學測驗，<br>是一位真正的數學勇者！</p>
+        <button class="restart-btn" onclick="location.reload()">再玩一次</button>
+    </div>
+</div>
 
-        // 刁鑽進階題庫
-        const advancedPairs = [
-            [{text: "0.001", val: 0.001}, {text: "0.1%", val: 0.001}],
-            [{text: "1/1000", val: 0.001}, {text: "0.1%", val: 0.001}],
-            [{text: "0.802", val: 0.802}, {text: "80.2%", val: 0.802}],
-            [{text: "0.125", val: 0.125}, {text: "12.5%", val: 0.125}],
-            [{text: "1/8", val: 0.125}, {text: "12.5%", val: 0.125}],
-            [{text: "0.375", val: 0.375}, {text: "37.5%", val: 0.375}],
-            [{text: "3/8", val: 0.375}, {text: "37.5%", val: 0.375}],
-            [{text: "0.875", val: 0.875}, {text: "87.5%", val: 0.875}],
-            [{text: "7/8", val: 0.875}, {text: "87.5%", val: 0.875}],
-            [{text: "1.5", val: 1.5}, {text: "150%", val: 1.5}],
-            [{text: "3/2", val: 1.5}, {text: "150%", val: 1.5}],
-            [{text: "0.002", val: 0.002}, {text: "0.2%", val: 0.002}],
-            [{text: "0.045", val: 0.045}, {text: "4.5%", val: 0.045}],
-            [{text: "1.05", val: 1.05}, {text: "105%", val: 1.05}]
-        ];
-
-        let currentLevel = 1;
-        let cards = [];
-        let firstCard = null;
-        let secondCard = null;
-        let matchedCardsCount = 0;
-        let targetCardsCount = 0;
-        let timeElapsed = 0;
-        let timerInterval = null;
-        let isLocked = false;
-
-        const boardElement = document.getElementById("board");
-        const timerElement = document.getElementById("timer");
-        const levelElement = document.getElementById("levelDisplay");
-        const startBtn = document.getElementById("startBtn");
-
-        function formatText(text) {
-            if (text.includes('🌟')) return text; 
-            if (text.includes('/')) {
-                const parts = text.split('/');
-                return `<div class="fraction"><span class="num">${parts[0]}</span><span class="den">${parts[1]}</span></div>`;
-            }
-            return text;
+<script>
+    const quizData = [
+        {
+            unit: "第06單元：整數與小數的除法",
+            question: "一條長65公尺的繩子，可以綁4捆粽子，平均綁一捆粽子要幾公尺長的繩子？",
+            options: ["16公尺", "15.25公尺", "16.25公尺", "16.5公尺"],
+            answer: 2
+        },
+        {
+            unit: "第07單元：表面積",
+            question: "有一個長和寬都是5公分、高是8公分的長方體紙箱，表面積至少是多少平方公分？<br><small>(提示：上下兩面是正方形，側面是4個長方形)</small>",
+            options: ["130 平方公分", "200 平方公分", "210 平方公分", "160 平方公分"],
+            answer: 2
+        },
+        {
+            unit: "第08單元：比率與百分率",
+            question: "運動用品店裡有一雙球鞋，成本是2000元。老闆「加二成」作為定價，定價是多少元？",
+            options: ["2400元", "2200元", "1600元", "2020元"],
+            answer: 0
+        },
+        {
+            unit: "第09單元：時間的乘除",
+            question: "烤箱每1小時35分鐘可以烤好一盤蛋糕，姐姐烤2盤蛋糕，共花了幾小時幾分鐘？",
+            options: ["2小時10分鐘", "3小時10分鐘", "2小時70分鐘", "3小時35分鐘"],
+            answer: 1
+        },
+        {
+            unit: "第10單元：生活中的大單位",
+            question: "太魯閣國家公園的面積大約是920平方公里，也可以說是幾公頃？",
+            options: ["9200 公頃", "92 公頃", "92000 公頃", "920000 公頃"],
+            answer: 2
         }
+    ];
 
-        function getRandomPairs(sourceArray, count) {
-            let shuffled = [...sourceArray].sort(() => Math.random() - 0.5);
-            return shuffled.slice(0, count);
-        }
+    let currentQuestionIndex = 0;
 
-        function startGame() {
-            startBtn.textContent = "重新開始";
-            clearInterval(timerInterval);
-            timeElapsed = 0;
-            currentLevel = 1;
-            timerElement.textContent = timeElapsed;
+    function startGame() {
+        document.getElementById('start-screen').style.display = 'none';
+        document.getElementById('progress-bar').style.display = 'block';
+        document.getElementById('quiz-screen').style.display = 'block';
+        loadQuestion();
+    }
 
-            timerInterval = setInterval(() => {
-                timeElapsed++;
-                timerElement.textContent = timeElapsed;
-            }, 1000);
+    function loadQuestion() {
+        const currentData = quizData[currentQuestionIndex];
+        document.getElementById('unit-badge').innerText = currentData.unit;
+        document.getElementById('question').innerHTML = currentData.question;
+        document.getElementById('feedback').innerText = "";
+        
+        // Update Progress
+        const progressPercent = (currentQuestionIndex / quizData.length) * 100;
+        document.getElementById('progress').style.width = progressPercent + "%";
 
-            loadLevel(currentLevel);
-        }
+        const optionsContainer = document.getElementById('options');
+        optionsContainer.innerHTML = "";
+        
+        currentData.options.forEach((opt, index) => {
+            const btn = document.createElement('button');
+            btn.className = 'option-btn';
+            btn.innerText = opt;
+            btn.onclick = () => checkAnswer(index, btn);
+            optionsContainer.appendChild(btn);
+        });
+    }
 
-        function loadLevel(level) {
-            matchedCardsCount = 0;
-            firstCard = null;
-            secondCard = null;
-            isLocked = false;
-            levelElement.textContent = level;
+    function checkAnswer(selectedIndex, btnElement) {
+        const currentData = quizData[currentQuestionIndex];
+        const feedbackEl = document.getElementById('feedback');
+        const allBtns = document.querySelectorAll('.option-btn');
 
-            let deckPairs = [];
-            let hasJoker = false;
+        // Disable all buttons after clicking
+        allBtns.forEach(b => b.disabled = true);
 
-            if (level === 1) { // 16 題 = 8 對 (全基礎)
-                deckPairs = getRandomPairs(basicPairs, 8);
-            } else if (level === 2) { // 25 題 = 12 對 + 1 送分卡 (開始混入少量進階)
-                let adv = getRandomPairs(advancedPairs, 4); // 4對進階
-                let bas = getRandomPairs(basicPairs, 8); // 8對基礎
-                deckPairs = [...adv, ...bas];
-                hasJoker = true;
-            } else if (level === 3) { // 36 題 = 18 對 (大量進階)
-                let adv = getRandomPairs(advancedPairs, 10); // 10對進階
-                let bas = getRandomPairs(basicPairs, 8); // 8對基礎
-                deckPairs = [...adv, ...bas];
-            } 
-
-            let deckCards = [];
-            deckPairs.forEach(pair => {
-                deckCards.push(pair[0]);
-                deckCards.push(pair[1]);
-            });
-
-            if (hasJoker) {
-                deckCards.push({text: "🌟<br>送分", val: "joker"});
-            }
-
-            targetCardsCount = deckCards.length;
-            cards = deckCards.sort(() => Math.random() - 0.5);
-
-            boardElement.className = `game-board level-${level}`;
-            boardElement.innerHTML = "";
-
-            cards.forEach((card, index) => {
-                const cardDiv = document.createElement("div");
-                cardDiv.classList.add("card");
-                if (card.val === 'joker') cardDiv.classList.add("joker-card");
-                
-                cardDiv.innerHTML = formatText(card.text);
-                cardDiv.dataset.val = card.val;
-                cardDiv.dataset.index = index;
-                
-                cardDiv.addEventListener("click", () => handleCardClick(cardDiv));
-                boardElement.appendChild(cardDiv);
-            });
-        }
-
-        function handleCardClick(cardElement) {
-            if (isLocked || cardElement.classList.contains("matched") || cardElement === firstCard) return;
-
-            // 處理送分卡
-            if (cardElement.dataset.val === 'joker') {
-                cardElement.classList.add("matched");
-                matchedCardsCount += 1;
-                checkWin();
-                return;
-            }
-
-            cardElement.classList.add("selected");
-
-            if (!firstCard) {
-                firstCard = cardElement;
-            } else {
-                secondCard = cardElement;
-                isLocked = true;
-
-                if (firstCard.dataset.val === secondCard.dataset.val) {
-                    setTimeout(() => {
-                        firstCard.classList.remove("selected");
-                        secondCard.classList.remove("selected");
-                        firstCard.classList.add("matched");
-                        secondCard.classList.add("matched");
-                        
-                        firstCard = null;
-                        secondCard = null;
-                        isLocked = false;
-                        matchedCardsCount += 2;
-                        checkWin();
-                    }, 350);
+        if (selectedIndex === currentData.answer) {
+            feedbackEl.innerHTML = "✨ 答對了！太厲害了！";
+            feedbackEl.className = "correct";
+            btnElement.style.backgroundColor = "#2ecc71";
+            btnElement.style.color = "white";
+            
+            setTimeout(() => {
+                currentQuestionIndex++;
+                if (currentQuestionIndex < quizData.length) {
+                    loadQuestion();
                 } else {
-                    setTimeout(() => {
-                        firstCard.classList.remove("selected");
-                        secondCard.classList.remove("selected");
-                        firstCard = null;
-                        secondCard = null;
-                        isLocked = false;
-                    }, 600);
+                    showEndScreen();
                 }
-            }
-        }
-
-        function checkWin() {
-            if (matchedCardsCount === targetCardsCount) {
-                if (currentLevel < 3) {
-                    setTimeout(() => {
-                        alert(`🎉 太棒了！順利通過第 ${currentLevel} 關！\n準備好迎接下一關了嗎？`);
-                        currentLevel++;
-                        loadLevel(currentLevel);
-                    }, 300);
-                } else {
-                    clearInterval(timerInterval);
-                    setTimeout(() => {
-                        alert(`🏆 傳說級過關！\n您完成了全部 3 關，打敗了終極小數魔王！\n總共花費時間：${timeElapsed} 秒！`);
-                    }, 300);
-                }
-            }
-        }
-    </script>
-</body>
-</html>
+            }, 1500);
+        } else {
+            feedbackEl.innerHTML = "❌ 答錯囉！請再試一次！";
+            feedbackEl.className = "wrong";
+            btnElement.style.backgroundColor = "#e74c3
